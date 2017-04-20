@@ -1,53 +1,32 @@
 #!/usr/bin/evn python
 # -*- coding: utf-8 -*-
 '''
-Created on 2016年8月9日
+Created on April 10th, 2017
 
-@author: hstking hstking@hotmail.com
+@author: Zonglin DI
 '''
+
+
+# Import the necessary package which will be used in this program
+# urllib is for url connection
+# BeautifulSoup is for returning the elements
+# mylog is a custom class for logging
+# re is for regular expression
+# codecs is for encoding
+# json is for put the elements in order
+# datetime is for getting the time to name the file
 
 import urllib2
 from bs4 import BeautifulSoup
 from mylog import MyLog as mylog
 import re
-import random
 import time
 import codecs
 import json
 import datetime
 
-Agents1 = [
-  "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
-  "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Acoo Browser; SLCC1; .NET CLR 2.0.50727; Media Center PC 5.0; .NET CLR 3.0.04506)",
-  "Mozilla/4.0 (compatible; MSIE 7.0; AOL 9.5; AOLBuild 4337.35; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
-  "Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US)",
-  "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 2.0.50727; Media Center PC 6.0)",
-  "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 1.0.3705; .NET CLR 1.1.4322)",
-  "Mozilla/4.0 (compatible; MSIE 7.0b; Windows NT 5.2; .NET CLR 1.1.4322; .NET CLR 2.0.50727; InfoPath.2; .NET CLR 3.0.04506.30)",
-  "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN) AppleWebKit/523.15 (KHTML, like Gecko, Safari/419.3) Arora/0.3 (Change: 287 c9dfb30)",
-  "Mozilla/5.0 (X11; U; Linux; en-US) AppleWebKit/527+ (KHTML, like Gecko, Safari/419.3) Arora/0.6",
-  "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.2pre) Gecko/20070215 K-Ninja/2.1.1",
-  "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9) Gecko/20080705 Firefox/3.0 Kapiko/3.0",
-  "Mozilla/5.0 (X11; Linux i686; U;) Gecko/20070322 Kazehakase/0.4.5",
-  "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.8) Gecko Fedora/1.9.0.8-1.fc10 Kazehakase/0.5.6",
-  "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/535.20 (KHTML, like Gecko) Chrome/19.0.1036.7 Safari/535.20",
-  "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; fr) Presto/2.9.168 Version/11.52",
-]
 
-PROXIES = [
-'58.20.238.103:9797',
-'123.7.115.141:9797',
-'121.12.149.18:2226',
-'176.31.96.198:3128',
-'61.129.129.72:8080',
-'115.238.228.9:8080',
-'124.232.148.3:3128',
-'124.88.67.19:80',
-'60.251.63.159:8080',
-'118.180.15.152:8102'
-]
-
+#The elements we want to classify is a post and n replies, we created two classes seperately
 
 class relpy(object):
     Author = None
@@ -56,76 +35,57 @@ class relpy(object):
     content = None
 
 class Item(object):
-    title = None  # 帖子标题
-    firstAuthor = None  # 帖子创建者
-    firstPublish_time = None  # 帖子创建时间
-    content = None  # 主题内容
-    reply = []  # 回复内容
+    title = None  # posting title
+    firstAuthor = None  # posting author
+    firstPublish_time = None  # posting publishing time
+    content = None  # Post content
+    reply = []  # A post could have many replies so a list is more proper
 
-
-
-def getResponseContent(url):
-    try:
-        response = urllib2.urlopen(url.encode('utf8'))
-    except:
-        print (u'Python 返回URL:%s  数据失败' % url)
-    else:
-        print (u'Python 返回URL:%s  数据成功' % url)
-        return response.read()
-
-def GetPageUrl(url):
-    htmlContent_p = getResponseContent(url)
-    soup = BeautifulSoup(htmlContent_p, 'lxml')
-    pageNumber = soup.find_all('a', attrs={'class': 'last'})
-    pageNumber = pageNumber[0].get_text().strip().strip('.')
-    pageNumber = 200
-
-    urls = []
-    url_array = url.split('-')
-    url_constant = "8.7k7k.com/"
-
-    for i in range(27,pageNumber,1):
-        url_sub_array = url_array[2].split('.')
-        url_sub_array[0] = str(i)
-        url_array[2] = url_sub_array[0] + '.' + url_sub_array[1]
-        url = url_array[0] + '-' + url_array[1] + '-' + url_array[2]
-        htmlContent_p = getResponseContent(url)
-        soup = BeautifulSoup(htmlContent_p,'lxml')
-        Tag = soup.find_all('a',attrs={'onclick':'atarget(this)','class':'xst'})
-        for link in Tag:
-            href = link.get('href')
-            urls.append(url_constant + href)
-
-    return urls
-
-
+# Create a class about get 8.7k7k.com
+# When the class is created, call these function
 
 class Get7k7kInfo(object):
     def __init__(self, url):
         self.url = url
-        self.log = mylog()
-        self.pageSum = self.getPageNumber(self.url)
-        self.urls1 = self.getUrls(self.pageSum)
-        self.items = self.spider(self.urls1)
-        self.pipelines(self.items)
+        # url we used to resolve
 
+        self.log = mylog()
+        # instantiate a mylog class for logging
+
+        self.pageSum = self.getPageNumber(self.url)
+        # get how many pages for one post
+
+        self.urls1 = self.getUrls(self.pageSum)
+        # get the number of post or replies on one page
+
+        [self.items, self.all_list, self.rubbish_list] = self.spider(self.urls1)
+        # The spider function is to get the class which includes one Item, all the words on the page for predict and the rubbish for negative
+
+        self.pipelines(self.items,  self.all_list, self.rubbish_list)
+        # To output the item, all the words and rubbish to the .txt for following TensorFlow
+
+
+    # Function getPageNumber is to get the number of posting pages
+    # 1 posting consists of 1 post, M replies and N pages
+    # There are 20 repies (post) on 1 page
+    # So, the N = ⌈(1+M)/20⌉
+    
     def getPageNumber(self, url):
         htmlContent = self.getResponseContent(url)
         soup = BeautifulSoup(htmlContent, 'lxml')
-        htmlContent = urllib2.urlopen(url.encode('utf8'))
-        soup = BeautifulSoup(htmlContent, 'lxml')
-
+        
+        # use regular expression to resolve the page number
         str = re.compile(u'共 \d+ 页')
         pageNumber_array = soup.find_all('span', attrs={'title': str})
         if (len(pageNumber_array) != 0):
             pageNumber = pageNumber_array[0].get_text().strip()
             pageNumber = int(re.sub("\D", "", pageNumber))
         else:
-            pageNumber = 1
-
-        self.log.info(pageNumber)
+            pageNumber = 1 # If there is no such struct, 1+M <= 20. So there is only 1 page
+            
         return pageNumber
 
+    
     def getUrls(self, pageSum):
         urls1 = []
         ul = self.url.split('-')
@@ -136,7 +96,8 @@ class Get7k7kInfo(object):
             urls1.append(url)
         self.log.info(u'获取URLS成功')
         return urls1
-
+    
+    # Transfer the time to the format we need
     def timeFormat(self, publish_time):
         text = publish_time.split(' ')[1]
         text_array = text.split('-')
@@ -166,14 +127,19 @@ class Get7k7kInfo(object):
     def spider(self, urls):
         item = Item()
         del item.reply[:]
-        # item.firstAuthor = None
-        # item.firstPublish_time = None
-        # item.title = None
-        # item.content = None
+        all_list = []
+        del all_list[:]
+        rubbish_list = []
+        del rubbish_list[:]
         j = 1
         for url in urls:
             htmlContent = self.getResponseContent(url)
             soup = BeautifulSoup(htmlContent, 'lxml')
+            block_list = soup.find_all('div',attrs={'id':re.compile('post_\d{7}')})
+
+            for block in block_list:
+                all_list.append(block.get_text().strip())
+
             title = soup.find_all('a', attrs={'id': 'thread_subject'})
             if(len(title) == 0):
                 return item
@@ -194,6 +160,8 @@ class Get7k7kInfo(object):
                 firstPublish_time_text = publish_timelist[0].get_text()
                 item.firstPublish_time = self.timeFormat(firstPublish_time_text)
 
+                rubbish_list.append(all_list[0].strip(item.firstAuthor).strip(item.content).strip(item.firstPublish_time).strip(item.title))
+
                 for k in range(1,len(contentlist),1):
                     replies = relpy()
                     replies.title = item.title
@@ -201,6 +169,8 @@ class Get7k7kInfo(object):
                     replies.Publish_time = self.timeFormat(publish_timelist[k].get_text())
                     replies.content = contentlist[k].get_text().strip()
                     item.reply.append(replies)
+
+                    rubbish_list.append(all_list[k].strip(replies.title).strip(replies.Author).strip(replies.Publish_time).strip(replies.content))
                 j = j + 1
             else:
                 for k in range(len(contentlist)):
@@ -210,37 +180,47 @@ class Get7k7kInfo(object):
                     replies.Publish_time = self.timeFormat(publish_timelist[k].get_text())
                     replies.content = contentlist[k].get_text().strip()
                     item.reply.append(replies)
+
+                    rubbish_list.append(all_list[19 + k].strip(replies.title).strip(replies.Author).strip(replies.Publish_time).strip(replies.content))
+
                 j = j + 1
 
-        return item
+        return item, all_list, rubbish_list
 
-        #     for tag in tagsli:
-        #         item = Item()
-        #         item.title = tag.find('a', attrs={'class': 'j_th_tit'}).get_text().strip()
-        #         item.firstAuthor = tag.find('span', attrs={'class': 'frs-author-name-wrap'}).a.get_text().strip()
-        #         item.firstTime = tag.find('span', attrs={'title': u'创建时间'.encode('utf8')}).get_text().strip()
-        #         item.reNum = tag.find('span', attrs={'title': u'回复'.encode('utf8')}).get_text().strip()
-        #         item.content = tag.find('div',
-        #                                 attrs={'class': 'threadlist_abs threadlist_abs_onlyline '}).get_text().strip()
-        #         item.lastAuthor = tag.find('span',
-        #                                    attrs={'class': 'tb_icon_author_rely j_replyer'}).a.get_text().strip()
-        #         item.lastTime = tag.find('span', attrs={'title': u'最后回复时间'.encode('utf8')}).get_text().strip()
-        #         items.append(item)
-        #         self.log.info(u'获取标题为<<%s>>的项成功 ...' % item.title)
-        # return items
 
-    def pipelines(self, items):
-        if(items.content == None):
-            return
-        GMT_FORMAT = '%d %b %Y %H%M%S GMT'
+    def pipelines(self, items, all_list, rubbish_list):
+        GMT_FORMAT = '%a%d%b%Y%H%M%SGMT'
         today = datetime.datetime.utcnow().strftime(GMT_FORMAT)
-        fileName =  today + '.json'
-        fileName1 =  today + '.txt'
-        with codecs.open(fileName1,'a',encoding='utf8') as fp1:
-            line1 = items.firstAuthor + '\n' + u'author' + '\n' + items.content + '\n' + u'content' + '\n' + items.firstPublish_time + '\n' + u'publish_date' + '\n' + items.title + '\n' + u'title' '\n'
+        
+        # Ubuntu file path
+        fileName = '/home/elegant/Downloads/weather/weather/json/' + today + '.json'
+        fileName_validate = '/home/elegant/Downloads/weather/weather/validate/' + today + '_validate.txt'
+        fileName_all_list = '/home/elegant/Downloads/weather/weather/all1/' + today + '_all1.txt'
+        fileName_rubbish_list = '/home/elegant/Downloads/weather/weather/rubbish1/' + today + '_rubbish1.txt'
+        
+        # # Windows file path
+        # fileName = 'C:/Users/Administrator/PycharmProjects/Spider/json/' + today + '.json'
+        # fileName_validate = 'C:/Users/Administrator/PycharmProjects/Spider/_validate/' + today + '_validate.txt'
+        # fileName_all_list = 'C:/Users/Administrator/PycharmProjects/Spider/_all1/' + today + '_all1.txt'
+        # fileName_rubbish_list = 'C:/Users/Administrator/PycharmProjects/Spider/_rubbish1/' + today + '_rubbish1.txt'
+        
+        with codecs.open(fileName_validate, 'a', encoding='utf8') as fp1:
+            line1 = items.firstAuthor + '\n' + u'author' + '\n'  + items.content + '\n' + u'content' + '\n' + items.firstPublish_time + '\n' + u'publish_date' + '\n' + items.title + '\n'  + u'title' '\n'
             for replys in items.reply:
-                line1 = line1 + replys.Author + '\n' + u'author' + '\n' + replys.content + '\n' + u'content' + '\n' + replys.Publish_time + '\n' + u'publish_date' + '\n' + replys.title + '\n' + u'title'
+                line1 = line1 + replys.Author + '\n' + u'author' + '\n' + replys.content + '\n' + u'content' + '\n' + replys.Publish_time + '\n' + u'publish_date' + '\n' +  replys.title + '\n' + u'title'
             fp1.write(line1)
+
+        with codecs.open(fileName_all_list, 'a', encoding='utf8') as fp4:
+            line_all = ''
+            for all in all_list:
+                line_all = line_all + u'TONGJI_UNIVERSITY\n' + all;
+            fp4.write(line_all)
+
+        with codecs.open(fileName_rubbish_list,'a',encoding='utf8') as fp5:
+            line_rubbish = ''
+            for rubbish in rubbish_list:
+                line_rubbish = line_rubbish + 'TONGJI_UNIVERSITY\n' +  rubbish
+            fp5.write(line_rubbish)
 
         with codecs.open(fileName, 'a', encoding='utf8') as fp:
             line = '{' + '\"post\":' + json.dumps(items.__dict__, ensure_ascii=False) + ',\"replys\":['
@@ -248,21 +228,11 @@ class Get7k7kInfo(object):
                 line = line + json.dumps(reply.__dict__, ensure_ascii=False)
             line = line + ']}'
             fp.write(line)
+
         print today + ' Finished'
 
-    def getRandomProxy(self):
-        return random.choice(PROXIES)
-
-    def getRandomHeaders(self):
-        return random.choice(Agents1)
 
     def getResponseContent(self, url):
-        # fakeHeaders = {'User-Agent': self.getRandomHeaders()}
-        # request = urllib2.Request(url.encode('utf8'), headers=fakeHeaders)
-        #
-        # proxy = urllib2.ProxyHandler({'http': 'http://' + self.getRandomProxy()})
-        # opener = urllib2.build_opener(proxy)
-        # urllib2.install_opener(opener)
         try:
             response = urllib2.urlopen(url.encode('utf8'))
         except:
@@ -272,8 +242,43 @@ class Get7k7kInfo(object):
             return response.read()
 
 
+def getResponseContent(url):
+    try:
+        response = urllib2.urlopen(url.encode('utf8'))
+    except:
+        print (u'Python 返回URL:%s  数据失败' % url)
+    else:
+        print (u'Python 返回URL:%s  数据成功' % url)
+        return response.read()
+
+# Function GetPageUrl is to resolve for every posting's 1st url
+def GetPageUrl(url):
+    htmlContent_p = getResponseContent(url)
+    soup = BeautifulSoup(htmlContent_p, 'lxml')
+    pageNumber = soup.find_all('a', attrs={'class': 'last'})
+    pageNumber = pageNumber[0].get_text().strip().strip('.')
+    pageNumber = 100
+
+    urls = []
+    url_array = url.split('-')
+    url_constant = "8.7k7k.com/"
+
+    for i in range(42,pageNumber,1):
+        url_sub_array = url_array[2].split('.')
+        url_sub_array[0] = str(i)
+        url_array[2] = url_sub_array[0] + '.' + url_sub_array[1]
+        url = url_array[0] + '-' + url_array[1] + '-' + url_array[2]
+        htmlContent_p = getResponseContent(url)
+        soup = BeautifulSoup(htmlContent_p,'lxml')
+        Tag = soup.find_all('a',attrs={'onclick':'atarget(this)','class':'xst'})
+        for link in Tag:
+            href = link.get('href')
+            urls.append(url_constant + href)
+
+    return urls
+
 if __name__ == '__main__':
-    url = 'http://8.7k7k.com/forum-1356-14.html'
+    url = 'http://8.7k7k.com/forum-1409-1.html'
     urls = GetPageUrl(url)
     for url in urls:
         try:
