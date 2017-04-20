@@ -11,16 +11,16 @@ import sys
 class MyLog(object):
 	'''这个类用于创建一个自用的log '''
 	def __init__(self): #类MyLog的构造函数
-		user = getpass.getuser()
-		self.logger = logging.getLogger(user)
-		self.logger.setLevel(logging.DEBUG)
+		self.user = getpass.getuser()
+		self.logger = logging.getLogger(self.user)
+		self.logger.setLevel(logging.INFO)
 		logFile = 'getCommentInfo'+'.log' #日志文件名
 		formatter = logging.Formatter('%(asctime)-12s %(levelname)-8s %(name)-10s %(message)-12s')
 
 		'''日志显示到屏幕上并输出到日志文件内'''
 		logHand = logging.FileHandler(logFile)
 		logHand.setFormatter(formatter)
-		logHand.setLevel(logging.ERROR) #只有错误才会被记录到logfile中
+		logHand.setLevel(logging.INFO) #只有错误才会被记录到logfile中
 
 		logHandSt = logging.StreamHandler()
 		logHandSt.setFormatter(formatter)
