@@ -5,7 +5,7 @@
 - Open Terminal and run
 
 ```bash
-​```{r, engine='bash', count_lines}
+​```
 pip install scrapy
 ​```
 ```
@@ -15,7 +15,7 @@ pip install scrapy
 - go to **spiders** folder
 
 ```bash
-​```{r, engine='bash', count_lines}
+​```
 scrapy crawl books -o books.csv 
 ​```
 ```
@@ -24,7 +24,7 @@ scrapy crawl books -o books.csv
 - *books* is a very important parameter for it is defined in **book_spider.py**
 
 ```python
-​```{r, engine='python', count_lines}
+​```
 name = 'books' 
 ​```
 ```
@@ -33,7 +33,7 @@ name = 'books'
 - Use the following commands to see the content in the csv file and it will skip the first line of the csv file
 
 ```bash
-​```{r, engine='bash', count_lines}
+​```
 sed -n '2,$p' books.csv | cat -n
 ​```
 ```
@@ -43,7 +43,7 @@ sed -n '2,$p' books.csv | cat -n
 - *name* is the unique identifier of every spiders in one project, which is very important in a scrapy project. In
 
 ```bash
-​```{r, engine='bash', count_lines}
+​```
 scrapy crawl books -o books.csv
 ​```
 ```
